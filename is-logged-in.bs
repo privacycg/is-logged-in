@@ -84,7 +84,7 @@ ISSUE: Flesh out section with explanatory text, an example, more formal/algorith
 Navigator.isLoggedIn() –> Promise<bool>
 ```
 
-<h2 id="defending-Against-abuse">Defending Against Abuse</h2>
+<h2 id="defending-against-abuse">Defending Against Abuse</h2>
 
 <em>This section is non-normative.</em>
 
