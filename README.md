@@ -71,11 +71,11 @@ not a fully baked proposal.
 Here’s how the API for setting IsLoggedIn to true could look:
 
 ```
-navigator.setLoggedIn(
+navigator.setLoggedIn({
     username: non-whitespace string of limited length,
     credentialTokenType: “httpStateToken” OR “legacyAuthCookie”,
     optionalParams { }
-) –> Promise<void>
+}) –> Promise<void>
 ```
 
 The returned promise would resolve if the status was set and reject if
