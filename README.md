@@ -6,7 +6,9 @@ of the [Privacy Community Group](https://privacycg.github.io/).
 ## Editors:
 
 - [John Wilander](https://github.com/johnwilander), Apple Inc.
-- [Melanie Richards](https://github.com/melanierichards), Microsoft
+
+## Former Editors:
+- [Melanie Richards](https://github.com/melanierichards), formerly Microsoft
 
 ## Participate
 - https://github.com/privacycg/is-logged-in/issues
