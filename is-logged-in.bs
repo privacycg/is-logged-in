@@ -18,18 +18,184 @@ Level: None
 
 <em>This section is non-normative.</em>
 
-Blah blah blah.
+Currently, user agents have no way of knowing if the user is logged in
+to a particular website. Neither the existence of cookies nor
+frequent/recent user interaction can provide that signal, since most users
+have cookies for and interact with plenty of websites they are not
+logged in to. Additionally, cookies and other kinds of storage may carry login state, but there is no way to tell general storage and authentication tokens apart.
+
+At the same time, some user agents may wish to offer means to clear long-term storage where not the user is logged in, considering it a privacy issue that websites can store data virtually forever on the device. A logged-in signal could also enable a user agent to offer powerful browser features, or to create a seamless user experience by relaxing particular restrictions on websites where the user is logged in.
+
 </section>
 
 <h2 id="infra">Infrastructure</h2>
 
 This specification depends on the Infra standard. [[!INFRA]]
 
-<h2 id="acknowledgements" class="no-num">Acknowledgements</h2>
+<h2 id="the-isloggedin-api">The IsLoggedIn API</h2>
 
-Many thanks to
-Some Body,
-Somebody Else,
-and
-A. Third Person
-for their feedback on this proposal.
+The IsLoggedIn API creates a clear signal to the user agent that the user is logged into a website. It does <em>not</em> create a mechanism for the web developer to manage a user's identity or log the user in or out.
+
+This specification defines:
+
+  * A method for a website to signal to the browser that the user is logged in ({{Navigator/setLoggedIn()}})
+  * A method to signal that the user is logged out ({{Navigator/setLoggedOut()}})
+  * A method for third-party iframes to check whether the user is a logged-in customer ({{Navigator/setLoggedOut()}})
+
+ISSUE: Update "website" with a more precise term
+
+<h3 id="setLoggedIn">Logged-in signal: <dfn export method for=Navigator><code>setLoggedIn()</code></dfn></h3>
+
+ISSUE: Flesh out section with explanatory text, an example, more formal/algorithmic language.
+
+```
+Navigator.setLoggedIn(
+    username: non-whitespace string of limited length,
+    credentialTokenType: “httpStateToken” OR “legacyAuthCookie”,
+    optionalParams { }
+) –> Promise<void>
+```
+
+The returned promise would resolve if the status was set and reject if
+not. The API could potentially take an expiry parameter but here we’re
+assuming that a designated [HTTP State
+Token](https://mikewest.github.io/http-state-tokens/draft-west-http-state-tokens.html)
+or “legacy auth cookie” manages the expiry of the login through their
+own mechanisms.
+
+<h3 id="setLoggedOut">Logged-out signal: <dfn export method for=Navigator><code>setLoggedOut()</code></dfn></h3>
+
+ISSUE: Flesh out section with explanatory text, an example, more formal/algorithmic language.
+
+```
+Navigator.setLoggedOut(optionalUsername) –> Promise<void>
+```
+
+The optional username parameter highlights that we might want to support
+concurrent logins on the same website which would require the site to
+keep track of who to log out and credential tokens to be scoped to user
+names.
+
+<h3 id="isLoggedIn">Checking for a logged-in signal: <dfn export method for=Navigator><code>isLoggedIn()</code></dfn></h3>
+
+ISSUE: Flesh out section with explanatory text, an example, more formal/algorithmic language.
+
+```
+Navigator.isLoggedIn() –> Promise<bool>
+```
+
+<h2 id="defending-against-abuse">Defending Against Abuse</h2>
+
+<em>This section is non-normative.</em>
+
+If websites were allowed to set the IsLoggedIn status whenever they
+want, it would not constitute a trustworthy signal and would most likely
+be abused for user tracking. We must therefore make sure that IsLoggedIn
+can only be set when the browser is convinced that the user meant to log
+in or the user is already logged in and wants to stay logged in.
+
+Another potential for abuse is if websites don’t call the logout API
+when they should. This could allow them to maintain the privileges tied
+to logged in status even after the user logged out.
+
+There are several ways the browser could make sure the IsLoggedIn status
+is trustworthy:
+
+  * Require websites to use WebAuthn or a password manager (including
+    Credential Management) before calling the API.
+  * Require websites to take the user through a login flow according to
+    rules that the browser can check. This would be the escape hatch for
+    websites who can’t or don’t want to use WebAuthn or a password manager
+    but still want to set the IsLoggedIn bit.
+  * Show browser UI acquiring user intent when IsLoggedIn is set. Example:
+    A prompt.
+  * Continuously show browser UI indicating an active logged in session on
+    the particular website. Example: Some kind of indicator in the URL
+    bar.
+  * Delayed browser UI acquiring user intent to stay logged in, shown some
+    time after the IsLoggedIn status was set. Example: Seven days after
+    IsLoggedIn was set – “Do you want to stay logged in to news.example?”
+  * Requiring engagement to maintain logged in status. Example: Require
+    user interaction as first party website at least every N days to stay
+    logged in. The browser can hide instead of delete the credential token
+    past this kind of expiry to allow for quick resurrection of the logged
+    in session.
+
+<h2 id="credential-tokens">Credential Tokens</h2>
+
+<em>This section is non-normative.</em>
+
+Ideally, a new IsLoggedIn API like this would only work with modern
+login credentials. HTTP State Tokens could be such a modern piece.
+However, to ensure a smooth path for adoption, we probably want to
+support cookies as a legacy option.
+
+Both HTTP State Tokens and cookies would have to be explicitly set up
+for authentication purposes to work with IsLoggedIn. In the case of both
+of these token types, we could introduce an __auth- prefix as a signal
+that both the server and client consider the user to be logged in. Or we
+could allow HTTP State Token request and response headers to convey
+login status. Note that sending metadata in requests differs from how
+cookies work.
+
+The expiry of the token should be picked up as a logout by IsLoggedIn.
+
+Cookies have the capability to span a full registrable domain and thus
+log the user in to all subdomains at once. HTTP State Tokens have a
+proper connection to origins but can be declared to span the full
+registrable domain too. We should probably let the credential token
+control the scope of the IsLoggedIn status.
+
+Explicitly logging out should clear all website data for the website,
+not just the credential token. The reverse, the user clearing the
+credential token (individually or as part of a larger clearing of
+website data), should also log them out for the purposes of IsLoggedIn.
+
+<h2 id="federated-logins">Federated Logins</h2>
+
+<em>This section is non-normative.</em>
+
+Some websites allow the user to use an existing account with a federated
+login provider to bootstrap a new local user account and subsequently
+log in. The IsLoggedIn API needs to support such logins.
+
+<div class=example>
+
+First, the federated login provider needs to call the API on its side,
+possibly after the user has clicked a “Log in with X” button:
+
+```
+Navigator.initiateLoggedInFederated(destination: secure origin) –> Promise<void>
+```
+
+For the promise to resolve, the user needs to already have the
+IsLoggedIn status set for the federated login provider, i.e. the user
+needs to be logged in to the provider first.
+
+Then the destination website has to call the API on its side:
+
+```
+Navigator.setLoggedInFederated(
+    loginProvider: secure origin,
+    username,
+    credentialTokenType,
+    optionalParams { }
+) –> Promise<void>
+```
+
+The promise would only resolve if the <code>loginProvider</code> had recently
+called <code>setLoggedInFederated()</code> for this destination website.
+
+</div>
+
+<h2 id="privacy">Privacy considerations</h2>
+
+ISSUE: Write this section.
+
+<h2 id="security">Security considerations</h2>
+
+ISSUE: Write this section.
+
+<h2 id="acknowledgements">Acknowledgements</h2>
+
+ISSUE: Write this section.
