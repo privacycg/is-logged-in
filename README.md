@@ -1,4 +1,4 @@
-# Explainer: IsLoggedIn
+# Explainer: Login Status API
 
 A [Work Item](https://privacycg.github.io/charter.html#work-items)
 of the [Privacy Community Group](https://privacycg.github.io/).
@@ -6,7 +6,6 @@ of the [Privacy Community Group](https://privacycg.github.io/).
 ## Editors:
 
 - [John Wilander](https://github.com/johnwilander), Apple Inc.
-- [Melanie Richards](https://github.com/melanierichards), Microsoft
 
 ## Participate
 - https://github.com/privacycg/is-logged-in/issues
@@ -18,8 +17,8 @@ of the [Privacy Community Group](https://privacycg.github.io/).
 
 ## Introduction
 
-This explainer proposes an API called IsLoggedIn with which websites can
-inform the web browser of the user's login state.
+This explainer proposes an API called the Login Status API with which
+websites can inform the web browser of the user's login status.
 
 Currently, web browsers have no way of knowing if the user is logged in
 to a particular website. Neither the existence of cookies nor
@@ -68,27 +67,24 @@ not a fully baked proposal.
 
 ### API
 
-Here’s how the API for setting IsLoggedIn to true could look:
+Here’s how the API for recording a login could look:
 
 ```
-navigator.setLoggedIn(
+navigator.recordLogin(
     username: non-whitespace string of limited length,
-    credentialTokenType: “httpStateToken” OR “legacyAuthCookie”,
+    credentialTokenType: “cookie”,
     optionalParams { }
 ) –> Promise<void>
 ```
 
 The returned promise would resolve if the status was set and reject if
 not. The API could potentially take an expiry parameter but here we’re
-assuming that a designated [HTTP State
-Token](https://mikewest.github.io/http-state-tokens/draft-west-http-state-tokens.html)
-or “legacy auth cookie” manages the expiry of the login through their
-own mechanisms.
+assuming that a designated cookie manages the expiry of the login.
 
-Here’s how the API for setting IsLoggedIn to false could look:
+Here’s how the API for recording a logout could look:
 
 ```
-navigator.setLoggedOut(optionalUsername) –> Promise<void>
+navigator.recordLogout(optionalUsername) –> Promise<void>
 ```
 
 The optional username parameter highlights that we might want to support
@@ -96,10 +92,10 @@ concurrent logins on the same website which would require the site to
 keep track of who to log out and credential tokens to be scoped to user
 names.
 
-Here’s how the API for checking the IsLoggedIn status could look:
+Here’s how the API for checking the login status could look:
 
 ```
-navigator.isLoggedIn() –> Promise<bool>
+navigator.checkLoginState() –> Promise<bool>
 ```
 
 This last API could potentially be allowed to be called by third-party
@@ -109,17 +105,17 @@ the user is one of their logged in customers or not.
 
 ### Defending Against Abuse
 
-If websites were allowed to set the IsLoggedIn status whenever they
-want, it would not constitute a trustworthy signal and would most likely
-be abused for user tracking. We must therefore make sure that IsLoggedIn
+If websites were allowed to set login status whenever they want, it
+would not constitute a trustworthy signal and would most likely be 
+abused for user tracking. We must therefore make sure that login status
 can only be set when the browser is convinced that the user meant to log
 in or the user is already logged in and wants to stay logged in.
 
 Another potential for abuse is if websites don’t call the logout API
 when they should. This could allow them to maintain the privileges tied
-to logged in status even after the user logged out.
+to login status even after the user logged out.
 
-There are several ways the browser could make sure the IsLoggedIn status
+There are several ways the browser could make sure the login status
 is trustworthy:
 
 * Require websites to use WebAuthn or a password manager (including
@@ -127,70 +123,79 @@ is trustworthy:
 * Require websites to take the user through a login flow according to
   rules that the browser can check. This would be the escape hatch for
   websites who can’t or don’t want to use WebAuthn or a password manager
-  but still want to set the IsLoggedIn bit.
-* Show browser UI acquiring user intent when IsLoggedIn is set. Example:
-  A prompt.
-* Continuously show browser UI indicating an active logged in session on
+  but still want to set login status.
+* Show browser UI acquiring user intent when login status is set.
+  Example: A prompt.
+* Continuously show browser UI indicating an active login session on
   the particular website. Example: Some kind of indicator in the URL
   bar.
 * Delayed browser UI acquiring user intent to stay logged in, shown some
-  time after the IsLoggedIn status was set. Example: Seven days after
-  IsLoggedIn was set – “Do you want to stay logged in to news.example?”
-* Requiring engagement to maintain logged in status. Example: Require
-  user interaction as first party website at least every N days to stay
+  time after the login status was set. Example: Seven days after login
+  status was set – “Do you want to stay logged in to news.example?”
+* Requiring engagement to maintain login status. Example: Require user
+  interaction as first party website at least every N days to stay 
   logged in. The browser can hide instead of delete the credential token
-  past this kind of expiry to allow for quick resurrection of the logged
-  in session.
+  past this kind of expiry to allow for quick resurrection of the login
+  session.
 
 ### Credential Tokens
 
-Ideally, a new IsLoggedIn API like this would only work with modern
-login credentials. HTTP State Tokens could be such a modern piece.
-However, to ensure a smooth path for adoption, we probably want to
-support cookies as a legacy option.
+Ideally, a new Logon Status API like this would only work with modern
+login credentials. The proposed 
+[HTTP State
+Tokens](https://mikewest.github.io/http-state-tokens/draft-west-http-state-tokens.html)
+could become such a modern piece. However, to ensure a smooth path for
+adoption, we should support cookies.
 
 Both HTTP State Tokens and cookies would have to be explicitly set up
-for authentication purposes to work with IsLoggedIn. In the case of both
-of these token types, we could introduce an __auth- prefix as a signal
-that both the server and client consider the user to be logged in. Or we
-could allow HTTP State Token request and response headers to convey
-login status. Note that sending metadata in requests differs from how
-cookies work.
+for authentication purposes to work with the Login Status API. In the
+case of both of these token types, we could introduce an __auth- prefix
+as a signal that both the server and client consider the user to be
+logged in. Or we could allow HTTP State Token request and response
+headers to convey login status. Note that sending metadata in requests
+differs from how cookies work.
 
-The expiry of the token should be picked up as a logout by IsLoggedIn.
+The expiry of the cookie or token should be picked up as recordLogout().
 
 Cookies have the capability to span a full registrable domain and thus
 log the user in to all subdomains at once. HTTP State Tokens have a
 proper connection to origins but can be declared to span the full
 registrable domain too. We should probably let the credential token
-control the scope of the IsLoggedIn status.
+control the scope of the login status.
 
 Explicitly logging out should clear all website data for the website,
 not just the credential token. The reverse, the user clearing the
 credential token (individually or as part of a larger clearing of
-website data), should also log them out for the purposes of IsLoggedIn.
+website data), should also log them out for the purposes of the Login
+Status API.
 
 ### Federated Logins
 
 Some websites allow the user to use an existing account with a federated
 login provider to bootstrap a new local user account and subsequently
-log in. The IsLoggedIn API needs to support such logins.
+log in. The Login Status API needs to support such logins.
+
+This could be achieved through integration between the Login Status API
+and the proposed [WebID](https://github.com/WICG/WebID).
+
+If federated logins were to be supported by the Login Status API alone,
+it could look like this:
 
 First, the federated login provider needs to call the API on its side,
 possibly after the user has clicked a “Log in with X” button:
 
 ```
-navigator.initiateLoggedInFederated(destination: secure origin) –> Promise<void>
+navigator.initiateRecordFederatedLogin(destination: secure origin) –> Promise<void>
 ```
 
-For the promise to resolve, the user needs to already have the
-IsLoggedIn status set for the federated login provider, i.e. the user
-needs to be logged in to the provider first.
+For the promise to resolve, the user needs to already have login
+status set for the federated login provider, i.e. the user needs to
+be logged in to the provider first.
 
 Then the destination website has to call the API on its side:
 
 ```
-navigator.setLoggedInFederated(
+navigator.recordFederatedLogin(
     loginProvider: secure origin,
     username,
     credentialTokenType,
@@ -199,28 +204,26 @@ navigator.setLoggedInFederated(
 ```
 
 The promise would only resolve if the `loginProvider` had recently
-called `setLoggedInFederated()` for this destination website.
+called `initiateRecordFederatedLogin()` for this destination website.
 
 ## Challenges and Open Questions
 
 * __Grandfathering__. Some websites may not want to prompt an already
   logged in user or take them through an additional login flow just to
-  set the IsLoggedIn status.
+  set login status.
 * __Expiry limit__. What is a reasonable limit for expiry without
   revisit/re-engagement?
 * __Single sign-on__. If the browser supports
-  [First Party Sets](https://github.com/krgovind/first-party-sets), it
+  [First Party Sets](https://github.com/privacycg/first-party-sets), it
   may support single sign-on within the first party set, for instance
   with an optional parameter includeFirstPartySet: [secure origin 1,
   secure origin 2]`. The browser would check the integrity of the first
   party set claim and potentially ask the user for their intent to log
-  in to multiple websites at once before setting the IsLoggedIn status
-  for all of them. The expiry of the login status for the first party
-  set would likely be controlled by the expiry of the credential token
-  for the single sign-on origin. However, there is not browser agreement
-  on how to support First Party Sets in a privacy preserving way (see
-  [Issue 6](https://github.com/krgovind/first-party-sets/issues/6) and
-  [Issue 7](https://github.com/krgovind/first-party-sets/issues/7)).
+  in to multiple websites at once before setting login status for all
+  of them. The expiry of the login status for the first party set would
+  likely be controlled by the expiry of the credential token for the
+  single sign-on origin. However, there is not browser agreement
+  on how to support First Party Sets in a privacy preserving way.
 
 ## Considered alternatives
 
@@ -258,8 +261,4 @@ through the contributions of many, is only fair.]
 [Unless you have a specific reason not to, these should be in
 alphabetical order.]
 
-Many thanks for valuable feedback and advice from:
-
-- [Person 1]
-- [Person 2]
-- [etc.]
+Previous editor: [Melanie Richards](https://github.com/melanierichards), Microsoft
