@@ -261,4 +261,4 @@ through the contributions of many, is only fair.]
 [Unless you have a specific reason not to, these should be in
 alphabetical order.]
 
-Previous editor: [Melanie Richards](https://github.com/melanierichards), Microsoft
+Former editor: [Melanie Richards](https://github.com/melanierichards), Microsoft

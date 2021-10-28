@@ -5,7 +5,7 @@ Repository: privacycg/is-logged-in
 URL: https://privacycg.github.io/is-logged-in/
 Editor: John Wilander, w3cid 89478, Apple Inc. https://apple.com/, wilander@apple.com
 Former Editor: Melanie Richards, w3cid 96078, Microsoft https://microsoft.com/, Melanie.Richards@microsoft.com
-Abstract: This specification defines the IsLoggedIn API
+Abstract: This specification defines the Login Status API
 Status Text: This specification is intended to be migrated to the W3C standards track. It is not a W3C standard.
 Text Macro: LICENSE <a href=http://www.w3.org/Consortium/Legal/2015/copyright-software-and-document>W3C Software and Document License</a>
 Group: privacycg
@@ -217,5 +217,5 @@ ISSUE: Write this section.
 <h2 id="acknowledgements">Acknowledgements</h2>
 
 Melanie Richards, formerly at Microsoft, was co-editor July 2020 - August 2021.
-Thank you for contributions to the spec and for working to get consensus on
-challenging issues.
+We'd like to thank her for contributions to the spec and for working to get
+consensus on challenging issues.
