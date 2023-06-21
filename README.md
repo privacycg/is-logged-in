@@ -20,15 +20,15 @@ of the [Privacy Community Group](https://privacycg.github.io/).
 
 ## Introduction
 
-This explainer proposes a Web Platform API called the Login Status API which websites can use to inform the browser of their users's login status, so that other Web APIs can operate with this additional signal.
+This explainer proposes a Web Platform API called the **Login Status API** which websites can use to inform the browser of their users's login status, so that other Web APIs can operate with this additional signal.
 
 On one side, browsers don't have any built-in notion of whether the user is logged in or not.  Neither the existence  of cookies nor frequent/recent user interaction can serve that purpose since  most users have cookies for and interact with plenty of websites they are not logged-in to. High level Web Platform APIs, such as form submission with username/password fields,  WebAuthn, WebOTP and FedCM, can (implicitly) record login, but don't record logout - so the browser doesn't know if the user is logged in or not.
 
 On the other side, there is an increasing number of Web Platform APIs (e.g. [FedCM](https://github.com/privacycg/is-logged-in/issues/53), [Storage Access API](https://github.com/privacycg/storage-access/issues/8)) and Browser features (e.g. visual cues in the url bar, freeing up long term disk and backup space) that could perform better under the assumption of whether the user is logged in or not.
 
-This proposal aims at creating a set of APIs (e.g. HTTP headers, JS APIs and Cookie annotations) to manage a deliberate, explicit, opted-in and self-declared signal that websites can use to inform the browser.
+This proposal aims at creating a set of **extensible** APIs (e.g. HTTP headers, JS APIs and Cookie annotations) to manage a deliberate, explicit, **opted-in** and **self-declared** signal that websites can use to inform the browser.
 
-Because of the self-declared property of the signal, Web Platform APIs and Browser features have to design their use with abuse in mind.
+Because of the self-declared property of the signal, Web Platform APIs and Browser features **must** design their use with **abuse** in mind.
 
 ## Proposal
 
