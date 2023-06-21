@@ -22,11 +22,11 @@ of the [Privacy Community Group](https://privacycg.github.io/).
 
 This explainer proposes a Web Platform API called the **Login Status API** which websites can use to inform the browser of their users's login status, so that other Web APIs can operate with this additional signal.
 
-On one side, browsers don't have any built-in notion of whether the user is logged in or not.  Neither the existence  of cookies nor frequent/recent user interaction can serve that purpose since  most users have cookies for and interact with plenty of websites they are not logged-in to. High level Web Platform APIs, such as form submission with username/password fields,  WebAuthn, WebOTP and FedCM, can (implicitly) record login, but don't record logout - so the browser doesn't know if the user is logged in or not.
+On one hand, browsers don't have any built-in notion of whether the user is logged in or not.  Neither the existence  of cookies nor frequent/recent user interaction can serve that purpose since  most users have cookies for and interact with plenty of websites they are not logged-in to. High level Web Platform APIs, such as form submission with username/password fields,  WebAuthn, WebOTP and FedCM, can (implicitly) record login, but don't record logout - so the browser doesn't know if the user is logged in or not.
 
-On the other side, there is an increasing number of Web Platform APIs (e.g. [FedCM](https://github.com/privacycg/is-logged-in/issues/53), [Storage Access API](https://github.com/privacycg/storage-access/issues/8)) and Browser features (e.g. visual cues in the url bar, freeing up long term disk and backup space) that could perform better under the assumption of whether the user is logged in or not.
+On the other hand, there is an increasing number of Web Platform APIs (e.g. [FedCM](https://github.com/privacycg/is-logged-in/issues/53), [Storage Access API](https://github.com/privacycg/storage-access/issues/8)) and Browser features (e.g. visual cues in the url bar, freeing up long term disk and backup space) that could perform better under the assumption of whether the user is logged in or not.
 
-This proposal aims at creating a set of **extensible** APIs (e.g. HTTP headers, JS APIs and Cookie annotations) to manage a deliberate, explicit, **opted-in** and **self-declared** signal that websites can use to inform the browser.
+This proposal aims at creating a set of **extensible** APIs (e.g. HTTP headers, JS APIs, and Cookie annotations) to manage a deliberate, explicit, **opted-in** and **self-declared** signal that websites can use to inform the browser.
 
 Because of the self-declared property of the signal, Web Platform APIs and Browser features **must** design their use with **abuse** in mind.
 
@@ -44,11 +44,11 @@ The website's **self-declared** login status is represented as a single bit **pe
 
  By **default**, every origin has their login status bit set to `unknown`.
 
-The login status bit represents the **client-side** state of the origin in the browser and can be out-of-date with the **server-side** state (e.g. a user can delete their account in another browser instance).
+The login status bit represents the **client-side** state of the origin in the browser and can be out-of-date with the **server-side** state (e.g. a user can delete their account in another browser instance). Even then, due to cookie expiration, it is an imperfect representation of the client-side state, in that it may be outdated.
 
 ### Setting the Login Status
 
-There are many mechanisms that a website can use to set the login status:
+There are several mechanisms that a website can use to set the login status:
 
 > TODO: figure out if we can put these behind user activation.
 
@@ -60,7 +60,6 @@ Here’s how the API for recording a login / logout could look:
 partial interface Navigator {
   Promise<void> setLoggedIn(optional LoginStatusOptions options);
   Promise<void> setLoggedOut(optional LogoutStatusOptions options);
-  Promise<bool> isLoggedIn();
 };
 
 interface LoginStatusOptions {
