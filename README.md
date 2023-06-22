@@ -36,15 +36,17 @@ Below we present a proposal for how a web API for logged in status could look an
 
 ### Representation and Storage
 
-The website's **self-declared** login status is represented as a single bit **per origin** with the following possible values:
+The website's **self-declared** login status is represented as a single bit (or lack of one) **per origin** with the following possible values:
 
 - `unknown`: the browser has never observed a login nor a logout
 - `logged-in`: a user has logged-in to **an** account on the website
 - `logged-out`: the user has logged-out of **all** accounts on the website
 
- By **default**, every origin has their login status bit set to `unknown`.
+ By **default**, every origin has their login status set to `unknown`.
 
-The login status bit represents the **client-side** state of the origin in the browser and can be out-of-date with the **server-side** state (e.g. a user can delete their account in another browser instance). Even then, due to cookie expiration, it is an imperfect representation of the client-side state, in that it may be outdated.
+The login status represents the **client-side** state of the origin in the browser and can be out-of-date with the **server-side** state (e.g. a user can delete their account in another browser instance). Even then, due to cookie expiration, it is an imperfect representation of the client-side state, in that it may be outdated.
+
+It should not be the user agent's responsibility to ensure that client-side login status is reflective of server-side or cookie state. However, this proposal wants to make it as easy as possible for developers following recommended patterns to keep these states synchronized.
 
 ### Setting the Login Status
 
@@ -80,14 +82,9 @@ Sign-in-Status: type=idp, action=signin
 Sign-in-Status: type=idp, action=signout-all
 ```
 
-#### Cookie API
-
-> It is possible that we may want to annotate cookies (or [HTTP State
-Tokens](https://mikewest.github.io/http-state-tokens/draft-west-http-state-tokens.html)) so that they can convey the signal. We don't know what that looks like or whether it is needed at all, but it seemed important to acknowledge that Cookies may be an important part of API design.
-
 ### Using the Login Status
 
-The login status is a bit that is available to Web Platform APIs and Browser features outside of this specification. Specifications can extend the API to gather more specific signals needed.
+The login status is available to Web Platform APIs and Browser features outside of this proposal. Specifications can extend the API to gather more specific signals needed.
 
 #### Examples
 
@@ -104,12 +101,15 @@ navigator.setLoggedIn({
 
 ##### Storage Access API
 
-The [Storage Access API](https://github.com/privacycg/storage-access/issues/8#issue-560633211) needs a mechanism that allows websites to signal to the browser when the user is logged in. It may use the raw signal or extend it in case it needs more information:
+The [Storage Access API](https://github.com/privacycg/storage-access/issues/8#issue-560633211) could benefit from a login status signal by allowing developers to call the API with the option to only show user-facing prompts if the user is logged into their site, and reject otherwise. The Storage Access API must avoid directly exposing the login status to attackers that are measuring the time to rejection, by delaying the rejection by random response times that reflect average real user response times (which are usually in the range of a few seconds).
 
 ```javascript
 // Records that the user is logging-in, which allows the Storage Access API to conditionally dismiss its
 // UX.
 navigator.setLoggedIn();
+
+// In another cross-site top-level document, auto-reject rSA (with some delay to avoid timing attacks) unless the user is logged in
+document.requestStorageAccess({rejectUnlessLoggedIn: true}).then(...);
 ```
 
 ##### Browser Status UI
@@ -128,7 +128,7 @@ navigator.setLoggedIn({
 
 #### The Assumption of Abuse
 
-Every user of the login-status bit **MUST** assume that the login-status bit is:
+Every user of the login status (e.g. Web Standards or browser features integrating with it) **MUST** incorporate into their threat model that it is:
 
 1. Self-declared: any website can and will lie to gain any advantage
 2. Client-side: the state represent the website's client-side knowledge of the user's login status, which is just an approximation of the server-side's state (which is the ultimate source of truth) 
