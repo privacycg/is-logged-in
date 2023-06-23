@@ -36,7 +36,7 @@ Below we present a proposal for how a web API for logged in status could look an
 
 ### Representation and Storage
 
-The website's **self-declared** login status is represented as a single bit (or lack of one) **per origin** with the following possible values:
+The website's **self-declared** login status is represented as a three-state value **per origin** with the following possible values:
 
 - `unknown`: the browser has never observed a login nor a logout
 - `logged-in`: a user has logged-in to **an** account on the website
@@ -135,7 +135,7 @@ Every user of the login status (e.g. Web Standards or browser features integrati
 
 One potential for abuse is if websites don’t call the logout API when they should. This could allow them to maintain the privileges tied to login status even after the user logged out.
 
-Features using the Login Status bit need to assume that (1) an (2) are the case and design their security and privacy models under these conditions.
+Features using the Login Status need to assume that (1) an (2) are the case and design their security and privacy models under these conditions.
 
 ## Challenges and Open Questions
 
